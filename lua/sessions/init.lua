@@ -23,6 +23,8 @@ end
 local session_file_path = nil
 
 local write_session_file = function()
+  vim.cmd("DiffviewClose")
+
   local present, view = pcall(require, "nvim-tree.view")
 
   if not present then
