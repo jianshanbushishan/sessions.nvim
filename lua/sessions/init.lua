@@ -17,7 +17,7 @@ local config = {
 local M = {}
 
 local get_session_path = function(name)
-  return vim.fn.expand(config.session_filepath, ":p") .. sep .. name .. ".vim"
+  return vim.fn.fnamemodify(config.session_filepath, ":p") .. sep .. name .. ".vim"
 end
 
 local session_file_path = nil
@@ -118,6 +118,28 @@ M.loadlast = function()
   start_autosave()
 end
 
+M.get_workdir = function(name)
+  local path = get_session_path(name)
+  local f = io.open(path, "r")
+  if f == nil then
+    return ""
+  end
+
+  local ret = ""
+  for line in f:lines("*l") do
+    if line then
+      local dir = line:match("cd%s+(.*)")
+      if dir ~= nil then
+        ret = dir
+        break
+      end
+    end
+  end
+
+  io.close(f)
+  return ret
+end
+
 M.loadlist = function()
   local pickers = require("telescope.pickers")
   local finders = require("telescope.finders")
@@ -126,34 +148,46 @@ M.loadlist = function()
   local action_state = require("telescope.actions.state")
 
   local sessions = {}
-  for _, filename in ipairs(vim.fn.readdir(config.session_filepath)) do
-    local index, _ = string.find(filename, ".vim")
-    local name = string.sub(filename, 1, index - 1)
-    table.insert(sessions, name)
+  for _, path in ipairs(vim.fn.readdir(config.session_filepath)) do
+    local name = vim.fn.fnamemodify(path, ":t:r")
+    local workdir = M.get_workdir(name)
+    table.insert(sessions, { name, workdir })
   end
 
   local list_sessions = function(opts)
     opts = opts or {}
-    pickers
-      .new(opts, {
-        prompt_title = "My Sessions",
-        finder = finders.new_table({
-          results = sessions,
-        }),
-        sorter = conf.generic_sorter(opts),
-        attach_mappings = function(prompt_bufnr, _)
-          actions.select_default:replace(function()
-            actions.close(prompt_bufnr)
-            local selection = action_state.get_selected_entry()
-            M.load(selection[1])
-          end)
-          return true
+    pickers.new(opts, {
+      prompt_title = "My Sessions",
+      finder = finders.new_table({
+        results = sessions,
+        entry_maker = function(entry)
+          return {
+            value = entry,
+            display = entry[1] .. " (" .. entry[2] .. ")",
+            ordinal = entry[1],
+          }
         end,
-      })
-      :find()
+      }),
+      sorter = conf.generic_sorter(opts),
+      attach_mappings = function(prompt_bufnr, _)
+        actions.select_default:replace(function()
+          actions.close(prompt_bufnr)
+          local selection = action_state.get_selected_entry()
+          M.load(selection.ordinal)
+        end)
+        return true
+      end,
+    }):find()
   end
 
-  list_sessions(require("telescope.themes").get_dropdown({}))
+  list_sessions(
+    require("telescope.themes").get_dropdown({
+      layout_strategy = "horizontal",
+      layout_config = { horizontal = {
+        prompt_position = "top",
+      }, width = 0.5 },
+    })
+  )
 end
 
 M.setup = function()
