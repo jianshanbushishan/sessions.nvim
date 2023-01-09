@@ -22,8 +22,21 @@ end
 
 local session_file_path = nil
 
+local close_diffview = function()
+  local present, lazy = pcall(require, "diffview.lazy")
+  if not present then
+    return
+  end
+  local lib = lazy.require("diffview.lib")
+  local view = lib.get_current_view()
+  if view ~= nil then
+    view:close()
+    lib.dispose_view(view)
+  end
+end
+
 local write_session_file = function()
-  vim.cmd("DiffviewClose")
+  close_diffview()
 
   local present, view = pcall(require, "nvim-tree.view")
 
@@ -83,6 +96,12 @@ M.load = function(name)
   if not path or vim.fn.filereadable(path) == 0 then
     vim.notify(string.format("sessions.nvim: file '%s' does not exist.", path))
     return false
+  end
+
+  if session_file_path ~= nil then
+    M.save()
+    vim.cmd("silent! %bd!")
+    vim.cmd("clearjumps")
   end
 
   session_file_path = path
@@ -158,38 +177,41 @@ M.loadlist = function()
 
   local list_sessions = function(opts)
     opts = opts or {}
-    pickers.new(opts, {
-      prompt_title = "My Sessions",
-      finder = finders.new_table({
-        results = sessions,
-        entry_maker = function(entry)
-          return {
-            value = entry,
-            display = entry[1] .. " (" .. entry[2] .. ")",
-            ordinal = entry[1],
-          }
+    pickers
+      .new(opts, {
+        prompt_title = "My Sessions",
+        finder = finders.new_table({
+          results = sessions,
+          entry_maker = function(entry)
+            return {
+              value = entry,
+              display = entry[1] .. " (" .. entry[2] .. ")",
+              ordinal = entry[1],
+            }
+          end,
+        }),
+        sorter = conf.generic_sorter(opts),
+        attach_mappings = function(prompt_bufnr, _)
+          actions.select_default:replace(function()
+            actions.close(prompt_bufnr)
+            local selection = action_state.get_selected_entry()
+            M.load(selection.ordinal)
+          end)
+          return true
         end,
-      }),
-      sorter = conf.generic_sorter(opts),
-      attach_mappings = function(prompt_bufnr, _)
-        actions.select_default:replace(function()
-          actions.close(prompt_bufnr)
-          local selection = action_state.get_selected_entry()
-          M.load(selection.ordinal)
-        end)
-        return true
-      end,
-    }):find()
+      })
+      :find()
   end
 
-  list_sessions(
-    require("telescope.themes").get_dropdown({
-      layout_strategy = "horizontal",
-      layout_config = { horizontal = {
+  list_sessions(require("telescope.themes").get_dropdown({
+    layout_strategy = "horizontal",
+    layout_config = {
+      horizontal = {
         prompt_position = "top",
-      }, width = 0.5 },
-    })
-  )
+      },
+      width = 0.5,
+    },
+  }))
 end
 
 M.setup = function()
