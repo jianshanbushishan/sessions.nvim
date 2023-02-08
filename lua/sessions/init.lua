@@ -3,6 +3,7 @@ local levels = vim.log.levels
 local M = {
   save_path = vim.fn.stdpath("data") .. "/sessions/",
   cur_session = nil,
+  session_name = "",
   plugin = "Session.nvim",
 }
 
@@ -68,6 +69,7 @@ M.save = function(name)
     end
     set_autocmd()
   else
+    M.session_name = name
     M.cur_session = M.get_path(name)
   end
 
@@ -92,7 +94,21 @@ M.load = function(name)
     vim.cmd("clearjumps")
   end
 
+  M.doload(path, name)
+  return true
+end
+
+M.doload = function(path, name)
   M.cur_session = path
+  M.session_name = name
+
+  local workdir = M.get_workdir(M.session_name)
+  local project_settings = workdir .. "/project.vim"
+  if vim.fn.filereadable(project_settings) ~= 0 then
+    vim.cmd(string.format("silent! source %s", project_settings))
+    print("load project settings ok!")
+  end
+
   vim.cmd(string.format("silent! source %s", M.cur_session))
   set_autocmd()
 
@@ -101,7 +117,6 @@ M.load = function(name)
     levels.INFO,
     { title = M.plugin }
   )
-  return true
 end
 
 M.loadlast = function()
@@ -114,7 +129,7 @@ M.loadlast = function()
     return
   end
 
-  local latest_session = { session = nil, last_edited = 0 }
+  local latest_session = { session = nil, last_edited = 0, name = "" }
 
   for _, filename in ipairs(vim.fn.readdir(M.save_path)) do
     local session = M.save_path .. filename
@@ -122,6 +137,7 @@ M.loadlast = function()
 
     if last_edited > latest_session.last_edited then
       latest_session.session = session
+      latest_session.name = filename:match("(%w+).vim")
       latest_session.last_edited = last_edited
     end
   end
@@ -135,9 +151,7 @@ M.loadlast = function()
     return
   end
 
-  M.cur_session = latest_session.session
-  vim.cmd(string.format("silent! source %s", M.cur_session))
-  set_autocmd()
+  M.doload(latest_session.session, latest_session.name)
 end
 
 M.get_workdir = function(name)
