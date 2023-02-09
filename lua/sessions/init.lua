@@ -103,6 +103,16 @@ M.doload = function(path, name)
   M.session_name = name
 
   local workdir = M.get_workdir(M.session_name)
+  local is_windows = vim.loop.os_uname().sysname == "Windows_NT"
+  local home
+  if is_windows then
+    home = os.getenv("USERPROFILE")
+  else
+    home = os.getenv("HOME")
+  end
+  if home ~= nil then
+    workdir = workdir:gsub("~", home)
+  end
   local project_settings = workdir .. "/project.vim"
   if vim.fn.filereadable(project_settings) ~= 0 then
     vim.cmd(string.format("silent! source %s", project_settings))
@@ -210,27 +220,25 @@ M.loadlist = function()
 
   local list_sessions = function(opts)
     opts = opts or {}
-    pickers
-      .new(opts, {
-        prompt_title = "My Sessions",
-        finder = finders.new_table({
-          results = sessions,
-          entry_maker = function(entry)
-            return {
-              value = entry,
-              display = entry[1] .. " (" .. entry[2] .. ")",
-              ordinal = entry[1],
-            }
-          end,
-        }),
-        sorter = conf.generic_sorter(opts),
-        attach_mappings = function(_, map)
-          actions.select_default:replace(M.source)
-          map("i", "<c-d>", M.delete)
-          return true
+    pickers.new(opts, {
+      prompt_title = "My Sessions",
+      finder = finders.new_table({
+        results = sessions,
+        entry_maker = function(entry)
+          return {
+            value = entry,
+            display = entry[1] .. " (" .. entry[2] .. ")",
+            ordinal = entry[1],
+          }
         end,
-      })
-      :find()
+      }),
+      sorter = conf.generic_sorter(opts),
+      attach_mappings = function(_, map)
+        actions.select_default:replace(M.source)
+        map("i", "<c-d>", M.delete)
+        return true
+      end,
+    }):find()
   end
 
   list_sessions(require("telescope.themes").get_dropdown({
