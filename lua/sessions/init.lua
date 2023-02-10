@@ -103,16 +103,7 @@ M.doload = function(path, name)
   M.session_name = name
 
   local workdir = M.get_workdir(M.session_name)
-  local is_windows = vim.loop.os_uname().sysname == "Windows_NT"
-  local home
-  if is_windows then
-    home = os.getenv("USERPROFILE")
-  else
-    home = os.getenv("HOME")
-  end
-  if home ~= nil then
-    workdir = workdir:gsub("^~", home)
-  end
+  workdir = vim.fs.normalize(workdir)
   local project_settings = workdir .. "/project.vim"
   if vim.fn.filereadable(project_settings) ~= 0 then
     vim.cmd(string.format("silent! source %s", project_settings))
