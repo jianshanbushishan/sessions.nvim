@@ -11,11 +11,21 @@ M.get_path = function(name)
   return M.save_path .. name .. ".vim"
 end
 
+M.get_shada_path = function(name)
+  return vim.fn.stdpath("data") .. "/shada/" .. name .. ".shada"
+end
+
 local close_diffview = function()
+  local tabs = vim.api.nvim_list_tabpages()
+  if #tabs == 1 then
+    return
+  end
+
   local present, lazy = pcall(require, "diffview.lazy")
   if not present then
     return
   end
+
   local lib = lazy.require("diffview.lib")
   local view = lib.get_current_view()
   if view ~= nil then
@@ -42,6 +52,7 @@ M.write_session = function()
   end
 
   vim.cmd(string.format("mksession! %s", M.cur_session))
+  vim.cmd(string.format("wshada! %s", M.get_shada_path(M.session_name)))
 
   if restore then
     api.tree.open()
@@ -111,6 +122,16 @@ M.doload = function(path, name)
   end
 
   vim.cmd(string.format("silent! source %s", M.cur_session))
+  local shada_path = M.get_shada_path(M.session_name)
+  if vim.fn.filereadable(shada_path) > 0 then
+    vim.cmd("delmarks A-Z")
+    vim.fn.histdel(":")
+    vim.fn.histdel("/")
+    vim.fn.histdel("=")
+    vim.fn.histdel("@")
+    vim.fn.histdel(">")
+    vim.cmd(string.format("rshada! %s", shada_path))
+  end
   set_autocmd()
 
   vim.notify(
