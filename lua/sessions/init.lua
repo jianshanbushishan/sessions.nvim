@@ -139,6 +139,7 @@ M.doload = function(path, name)
     levels.INFO,
     { title = M.plugin }
   )
+  vim.cmd("stopinsert")
 end
 
 M.loadlast = function()
@@ -232,27 +233,25 @@ M.loadlist = function()
 
   local list_sessions = function(opts)
     opts = opts or {}
-    pickers
-      .new(opts, {
-        prompt_title = "My Sessions",
-        finder = finders.new_table({
-          results = sessions,
-          entry_maker = function(entry)
-            return {
-              value = entry,
-              display = entry[1] .. " (" .. entry[2] .. ")",
-              ordinal = entry[1],
-            }
-          end,
-        }),
-        sorter = conf.generic_sorter(opts),
-        attach_mappings = function(_, map)
-          actions.select_default:replace(M.source)
-          map("i", "<c-d>", M.delete)
-          return true
+    pickers.new(opts, {
+      prompt_title = "My Sessions",
+      finder = finders.new_table({
+        results = sessions,
+        entry_maker = function(entry)
+          return {
+            value = entry,
+            display = entry[1] .. " (" .. entry[2] .. ")",
+            ordinal = entry[1],
+          }
         end,
-      })
-      :find()
+      }),
+      sorter = conf.generic_sorter(opts),
+      attach_mappings = function(_, map)
+        actions.select_default:replace(M.source)
+        map("i", "<c-d>", M.delete)
+        return true
+      end,
+    }):find()
   end
 
   list_sessions(require("telescope.themes").get_dropdown({
