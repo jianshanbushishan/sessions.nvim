@@ -103,6 +103,14 @@ M.load = function(name)
     M.save()
     vim.cmd("silent! %bd!")
     vim.cmd("clearjumps")
+
+    local present, _ = pcall(require, "lspconfig")
+    if present then
+      local clients = vim.lsp.get_active_clients()
+      for _, client in ipairs(clients) do
+        client.stop(true)
+      end
+    end
   end
 
   M.doload(path, name)
@@ -140,6 +148,12 @@ M.doload = function(path, name)
     { title = M.plugin }
   )
   vim.cmd("stopinsert")
+  local present, _ = pcall(require, "lspconfig")
+  if present then
+    vim.defer_fn(function()
+      vim.cmd("LspStart")
+    end, 100)
+  end
 end
 
 M.loadlast = function()
@@ -233,25 +247,27 @@ M.loadlist = function()
 
   local list_sessions = function(opts)
     opts = opts or {}
-    pickers.new(opts, {
-      prompt_title = "My Sessions",
-      finder = finders.new_table({
-        results = sessions,
-        entry_maker = function(entry)
-          return {
-            value = entry,
-            display = entry[1] .. " (" .. entry[2] .. ")",
-            ordinal = entry[1],
-          }
+    pickers
+      .new(opts, {
+        prompt_title = "My Sessions",
+        finder = finders.new_table({
+          results = sessions,
+          entry_maker = function(entry)
+            return {
+              value = entry,
+              display = entry[1] .. " (" .. entry[2] .. ")",
+              ordinal = entry[1],
+            }
+          end,
+        }),
+        sorter = conf.generic_sorter(opts),
+        attach_mappings = function(_, map)
+          actions.select_default:replace(M.source)
+          map("i", "<c-d>", M.delete)
+          return true
         end,
-      }),
-      sorter = conf.generic_sorter(opts),
-      attach_mappings = function(_, map)
-        actions.select_default:replace(M.source)
-        map("i", "<c-d>", M.delete)
-        return true
-      end,
-    }):find()
+      })
+      :find()
   end
 
   list_sessions(require("telescope.themes").get_dropdown({
