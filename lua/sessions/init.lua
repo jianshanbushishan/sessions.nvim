@@ -147,7 +147,11 @@ M.doload = function(path, name)
     levels.INFO,
     { title = M.plugin }
   )
-  vim.cmd("stopinsert")
+
+  vim.defer_fn(function()
+    vim.cmd("stopinsert")
+  end, 50)
+
   local present, _ = pcall(require, "lspconfig")
   if present then
     vim.defer_fn(function()
