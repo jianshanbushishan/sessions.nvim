@@ -148,10 +148,6 @@ M.doload = function(path, name)
     { title = M.plugin }
   )
 
-  vim.defer_fn(function()
-    vim.cmd("stopinsert")
-  end, 50)
-
   local present, _ = pcall(require, "lspconfig")
   if present then
     vim.defer_fn(function()
