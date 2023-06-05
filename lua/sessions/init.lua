@@ -218,6 +218,9 @@ M.source = function(prompt_bufnr)
   local action_state = require("telescope.actions.state")
   actions.close(prompt_bufnr)
   local selection = action_state.get_selected_entry()
+  if selection == nil then
+    return
+  end
   M.load(selection.ordinal)
 end
 
