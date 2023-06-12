@@ -78,12 +78,12 @@ M.save = function(name)
       )
       return false
     end
-    set_autocmd()
   else
     M.session_name = name
     M.cur_session = M.get_path(name)
   end
 
+  set_autocmd()
   M.write_session()
   return true
 end
