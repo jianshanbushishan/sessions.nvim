@@ -273,15 +273,7 @@ M.loadlist = function()
       :find()
   end
 
-  list_sessions(require("telescope.themes").get_dropdown({
-    layout_strategy = "horizontal",
-    layout_config = {
-      horizontal = {
-        prompt_position = "top",
-      },
-      width = 0.5,
-    },
-  }))
+  list_sessions(require("telescope.themes").get_dropdown({}))
 end
 
 M.setup = function()
