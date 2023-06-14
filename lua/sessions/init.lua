@@ -100,6 +100,7 @@ M.load = function(name)
   end
 
   if M.cur_session ~= nil then
+    M.do_project_script(false)
     M.save()
     vim.cmd("silent! %bd!")
     vim.cmd("clearjumps")
@@ -117,17 +118,34 @@ M.load = function(name)
   return true
 end
 
+M.do_project_script = function(is_enter)
+  if is_enter then
+    local workdir = M.get_workdir(M.session_name)
+    workdir = vim.fs.normalize(workdir)
+    local project_settings = workdir .. "/project.lua"
+
+    if vim.fn.filereadable(project_settings) ~= 0 then
+      local m = dofile(project_settings)
+      if m == nil then
+        return
+      end
+
+      m.enter()
+      vim.g.session_settings = m
+    end
+  else
+    if vim.g.session_settings ~= nil then
+      vim.g.session_settings.exit()
+      vim.g.session_settings = nil
+    end
+  end
+end
+
 M.doload = function(path, name)
   M.cur_session = path
   M.session_name = name
 
-  local workdir = M.get_workdir(M.session_name)
-  workdir = vim.fs.normalize(workdir)
-  local project_settings = workdir .. "/project.vim"
-  if vim.fn.filereadable(project_settings) ~= 0 then
-    vim.cmd(string.format("silent! source %s", project_settings))
-    print("load project settings ok!")
-  end
+  M.do_project_script(true)
 
   vim.cmd(string.format("silent! source %s", M.cur_session))
   local shada_path = M.get_shada_path(M.session_name)
