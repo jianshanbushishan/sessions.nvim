@@ -71,11 +71,7 @@ end
 M.save = function(name)
   if name == nil then
     if M.cur_session == nil then
-      vim.notify(
-        "sessions.nvim: you must specify a session name.",
-        levels.WARN,
-        { title = M.plugin }
-      )
+      vim.notify("sessions.nvim: you must specify a session name.", levels.WARN, { title = M.plugin })
       return false
     end
   else
@@ -91,11 +87,7 @@ end
 M.load = function(name)
   local path = M.get_path(name)
   if not path or vim.fn.filereadable(path) == 0 then
-    vim.notify(
-      string.format("sessions.nvim: file '%s' does not exist.", path),
-      levels.WARN,
-      { title = M.plugin }
-    )
+    vim.notify(string.format("sessions.nvim: file '%s' does not exist.", path), levels.WARN, { title = M.plugin })
     return false
   end
 
@@ -160,11 +152,7 @@ M.doload = function(path, name)
   end
   set_autocmd()
 
-  vim.notify(
-    string.format("load session '" .. name .. "' ok!"),
-    levels.INFO,
-    { title = M.plugin }
-  )
+  vim.notify(string.format("load session '" .. name .. "' ok!"), levels.INFO, { title = M.plugin })
 
   local present, _ = pcall(require, "lspconfig")
   if present then
@@ -176,11 +164,7 @@ end
 
 M.loadlast = function()
   if M.cur_session ~= nil then
-    vim.notify(
-      string.format("sessions.nvim: you are working in a session yet."),
-      levels.WARN,
-      { title = M.plugin }
-    )
+    vim.notify(string.format("sessions.nvim: you are working in a session yet."), levels.WARN, { title = M.plugin })
     return
   end
 
@@ -198,11 +182,7 @@ M.loadlast = function()
   end
 
   if latest_session.session == nil then
-    vim.notify(
-      string.format("sessions.nvim: no session saved."),
-      levels.WARN,
-      { title = M.plugin }
-    )
+    vim.notify(string.format("sessions.nvim: no session saved."), levels.WARN, { title = M.plugin })
     return
   end
 
