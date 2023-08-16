@@ -34,13 +34,19 @@ local close_diffview = function()
   end
 end
 
+M.do_write_session = function()
+  vim.uv.fs_mkdir(M.save_path, 0755)
+  vim.cmd(string.format("mksession! %s", M.cur_session))
+  vim.cmd(string.format("wshada! %s", M.get_shada_path(M.session_name)))
+end
+
 M.write_session = function()
   close_diffview()
 
   local present, view = pcall(require, "nvim-tree.view")
 
   if not present then
-    vim.cmd(string.format("mksession! %s", M.cur_session))
+    M.do_write_session()
     return
   end
 
@@ -51,8 +57,7 @@ M.write_session = function()
     api.tree.close()
   end
 
-  vim.cmd(string.format("mksession! %s", M.cur_session))
-  vim.cmd(string.format("wshada! %s", M.get_shada_path(M.session_name)))
+  M.do_write_session()
 
   if restore then
     api.tree.open()
@@ -99,7 +104,7 @@ M.load = function(name)
 
     local present, _ = pcall(require, "lspconfig")
     if present then
-      local clients = vim.lsp.get_active_clients()
+      local clients = vim.lsp.get_clients()
       for _, client in ipairs(clients) do
         client.stop(false)
       end
