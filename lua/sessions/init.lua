@@ -35,7 +35,7 @@ local close_diffview = function()
 end
 
 M.do_write_session = function()
-  vim.uv.fs_mkdir(M.save_path, 493) -- 493对应于8进制的755
+  vim.loop.fs_mkdir(M.save_path, 493) -- 493对应于8进制的755
   vim.cmd(string.format("mksession! %s", M.cur_session))
   vim.cmd(string.format("wshada! %s", M.get_shada_path(M.session_name)))
 end
