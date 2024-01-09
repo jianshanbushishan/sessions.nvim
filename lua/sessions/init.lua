@@ -104,7 +104,7 @@ M.load = function(name)
 
     local present, _ = pcall(require, "lspconfig")
     if present then
-      local clients = vim.lsp.get_clients()
+      local clients = vim.lsp.get_active_clients()
       for _, client in ipairs(clients) do
         client.stop(false)
       end
