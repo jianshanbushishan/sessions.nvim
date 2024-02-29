@@ -161,7 +161,9 @@ M.doload = function(path, name)
 
   local present, api = pcall(require, "nvim-tree.api")
   if present then
-    api.tree.open()
+    vim.defer_fn(function()
+      api.tree.find_file({ focus = false, open = true })
+    end, 100)
   end
 
   present, _ = pcall(require, "lspconfig")
