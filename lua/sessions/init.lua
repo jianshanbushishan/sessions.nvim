@@ -60,7 +60,7 @@ M.write_session = function()
   M.do_write_session()
 
   if restore then
-    api.tree.open()
+    api.tree.find_file({ focus = false, open = true })
   end
 end
 
