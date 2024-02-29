@@ -159,7 +159,12 @@ M.doload = function(path, name)
 
   vim.notify(string.format("load session '" .. name .. "' ok!"), levels.INFO, { title = M.plugin })
 
-  local present, _ = pcall(require, "lspconfig")
+  local present, api = pcall(require, "nvim-tree.api")
+  if present then
+    api.tree.open()
+  end
+
+  present, _ = pcall(require, "lspconfig")
   if present then
     vim.defer_fn(function()
       vim.cmd("LspStart")
