@@ -102,16 +102,21 @@ M.load = function(name)
     vim.cmd("silent! %bd!")
     vim.cmd("clearjumps")
 
-    local present, _ = pcall(require, "lspconfig")
-    if present then
-      local clients = vim.lsp.get_active_clients()
-      for _, client in ipairs(clients) do
-        client.stop(false)
+    vim.defer_fn(function()
+      local present, _ = pcall(require, "lspconfig")
+      if present then
+        local clients = vim.lsp.get_active_clients()
+        for _, client in ipairs(clients) do
+          client.stop(false)
+        end
       end
-    end
+    end, 20)
   end
 
-  M.doload(path, name)
+  vim.defer_fn(function()
+    M.doload(path, name)
+  end, 50)
+
   return true
 end
 
