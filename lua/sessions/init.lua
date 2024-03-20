@@ -157,7 +157,7 @@ M.doload = function(path, name)
   end
   set_autocmd()
 
-  vim.notify(string.format("load session '" .. name .. "' ok!"), levels.INFO, { title = M.plugin })
+  -- vim.notify(string.format("load session '" .. name .. "' ok!"), levels.INFO, { title = M.plugin })
 
   local present, api = pcall(require, "nvim-tree.api")
   if present then
