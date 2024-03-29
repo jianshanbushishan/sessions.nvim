@@ -97,11 +97,6 @@ M.load = function(name)
   end
 
   if M.cur_session ~= nil then
-    M.do_project_script(false)
-    M.save()
-    vim.cmd("silent! %bd!")
-    vim.cmd("clearjumps")
-
     local present, _ = pcall(require, "lspconfig")
     if present then
       local clients = vim.lsp.get_active_clients()
@@ -109,6 +104,11 @@ M.load = function(name)
         client.stop(false)
       end
     end
+
+    M.do_project_script(false)
+    M.save()
+    vim.cmd("silent! %bd!")
+    vim.cmd("clearjumps")
   end
 
   M.doload(path, name)
