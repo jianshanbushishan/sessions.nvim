@@ -243,10 +243,12 @@ M.loadlist = function()
   vim.ui.select(names, {
     prompt = "select your session:",
     format_item = function(item)
-      return string.format("%s\t%s", item, workdirs[item])
+      return string.format("%s\t\t\t%s", item, workdirs[item])
     end,
   }, function(choice)
-    M.load(choice)
+    if choice ~= nil and choice ~= "" then
+      M.load(choice)
+    end
   end)
 end
 
