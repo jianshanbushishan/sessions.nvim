@@ -233,17 +233,23 @@ end
 M.loadlist = function()
   local names = {}
   local workdirs = {}
+  local maxNameLen = 0
   for _, path in ipairs(vim.fn.readdir(M.save_path)) do
     local name = vim.fn.fnamemodify(path, ":t:r")
     local workdir = M.get_workdir(name)
     table.insert(names, name)
     workdirs[name] = workdir
+    if #name > maxNameLen then
+      maxNameLen = #name
+    end
   end
 
   vim.ui.select(names, {
     prompt = "select your session:",
     format_item = function(item)
-      return string.format("%s\t\t\t%s", item, workdirs[item])
+      local n = maxNameLen - #item
+      local blanks = string.rep(" ", n)
+      return string.format("%s%s\t\t\t\t%s", item, blanks, workdirs[item])
     end,
   }, function(choice)
     if choice ~= nil and choice ~= "" then
