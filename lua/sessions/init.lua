@@ -118,7 +118,7 @@ M.load = function(name)
   vim.defer_fn(function()
     M.doload(path, name)
   end, 20)
-  
+
   return true
 end
 
@@ -230,73 +230,31 @@ M.get_workdir = function(name)
   return ret
 end
 
-M.source = function(prompt_bufnr)
-  local actions = require("telescope.actions")
-  local action_state = require("telescope.actions.state")
-  actions.close(prompt_bufnr)
-  local selection = action_state.get_selected_entry()
-  if selection == nil then
-    return
-  end
-  M.load(selection.ordinal)
-end
-
-M.delete = function(prompt_bufnr)
-  local actions = require("telescope.actions")
-  local action_state = require("telescope.actions.state")
-  actions.close(prompt_bufnr)
-  local selection = action_state.get_selected_entry()
-  local session = selection.ordinal
-  local path = M.get_path(session)
-  vim.fn.delete(path)
-  vim.notify("delete session " .. session .. " ok!", levels.INFO, { title = M.plugin })
-end
-
 M.loadlist = function()
-  local pickers = require("telescope.pickers")
-  local finders = require("telescope.finders")
-  local conf = require("telescope.config").values
-  local actions = require("telescope.actions")
-
-  local sessions = {}
+  local names = {}
+  local workdirs = {}
   for _, path in ipairs(vim.fn.readdir(M.save_path)) do
     local name = vim.fn.fnamemodify(path, ":t:r")
     local workdir = M.get_workdir(name)
-    table.insert(sessions, { name, workdir })
+    table.insert(names, name)
+    workdirs[name] = workdir
   end
 
-  local list_sessions = function(opts)
-    opts = opts or {}
-    pickers
-      .new(opts, {
-        prompt_title = "My Sessions",
-        finder = finders.new_table({
-          results = sessions,
-          entry_maker = function(entry)
-            return {
-              value = entry,
-              display = entry[1] .. " (" .. entry[2] .. ")",
-              ordinal = entry[1],
-            }
-          end,
-        }),
-        sorter = conf.generic_sorter(opts),
-        attach_mappings = function(_, map)
-          actions.select_default:replace(M.source)
-          map("i", "<c-d>", M.delete)
-          return true
-        end,
-      })
-      :find()
-  end
-
-  list_sessions(require("telescope.themes").get_dropdown({}))
+  vim.ui.select(names, {
+    prompt = "select your session:",
+    format_item = function(item)
+      return string.format("%s\t%s", item, workdirs[item])
+    end,
+  }, function(choice)
+    M.load(choice)
+  end)
 end
 
 M.setup = function()
   vim.cmd([[
     command! -nargs=? SessionsSave lua require("sessions").save(<f-args>)
     command! -nargs=0 SessionsLoadLast lua require("sessions").loadlast()
+    command! -nargs=0 SessionsLoadList lua require("sessions").loadlist()
     command! -nargs=1 SessionsLoad lua require("sessions").load(<f-args>)
     ]])
 end
