@@ -148,6 +148,7 @@ end
 M.doload = function(path, name)
   M.cur_session = path
   M.session_name = name
+  vim.opt.shada = "'50,<50,s100,:20,/30"
 
   M.do_project_script(true)
 
