@@ -15,53 +15,11 @@ M.get_shada_path = function(name)
   return vim.fn.stdpath("data") .. "/shada/" .. name .. ".shada"
 end
 
-local close_diffview = function()
-  local tabs = vim.api.nvim_list_tabpages()
-  if #tabs == 1 then
-    return
-  end
-
-  local present, lazy = pcall(require, "diffview.lazy")
-  if not present then
-    return
-  end
-
-  local lib = lazy.require("diffview.lib")
-  local view = lib.get_current_view()
-  if view ~= nil then
-    view:close()
-    lib.dispose_view(view)
-  end
-end
-
-M.do_write_session = function()
-  vim.loop.fs_mkdir(M.save_path, 493) -- 493对应于8进制的755
+M.write_session = function()
+  vim.uv.fs_mkdir(M.save_path, 493) -- 493对应于8进制的755
   vim.cmd(string.format("mksession! %s", M.cur_session))
   vim.cmd(string.format("wshada! %s", M.get_shada_path(M.session_name)))
-end
-
-M.write_session = function()
-  close_diffview()
-
-  local present, view = pcall(require, "nvim-tree.view")
-
-  if not present then
-    M.do_write_session()
-    return
-  end
-
-  local api = require("nvim-tree.api")
-  local restore = false
-  if view.is_visible() then
-    restore = true
-    api.tree.close()
-  end
-
-  M.do_write_session()
-
-  if restore then
-    api.tree.find_file({ focus = false, open = true })
-  end
+  vim.opt.shada = ""
 end
 
 local set_autocmd = function()
@@ -102,13 +60,6 @@ M.load = function(name)
     end
 
     M.save()
-    local present, _ = pcall(require, "lspconfig")
-    if present then
-      local clients = vim.lsp.get_active_clients()
-      for _, client in ipairs(clients) do
-        client.stop(false)
-      end
-    end
 
     M.do_project_script(false)
     vim.cmd("clearjumps")
@@ -165,21 +116,7 @@ M.doload = function(path, name)
   end
   set_autocmd()
 
-  -- vim.notify(string.format("load session '" .. name .. "' ok!"), levels.INFO, { title = M.plugin })
-
-  local present, api = pcall(require, "nvim-tree.api")
-  if present then
-    vim.defer_fn(function()
-      api.tree.find_file({ focus = false, open = true })
-    end, 100)
-  end
-
-  present, _ = pcall(require, "lspconfig")
-  if present then
-    vim.defer_fn(function()
-      vim.cmd("LspStart")
-    end, 100)
-  end
+  vim.notify(string.format("load session '" .. name .. "' ok!"), levels.INFO, { title = M.plugin })
 end
 
 M.loadlast = function()
